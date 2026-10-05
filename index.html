@@ -1,13 +1,19 @@
-<!DOCTYPE html>
+c'es<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Chasse au trÈsor</title>
+    <title>Chasse au tr√©sor</title>
 
     <style>
-        * {
+        * {body {
+    background-image: url("Fondnoel.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
             box-sizing: border-box;
         }
 
@@ -86,10 +92,10 @@
 
     <div class="emoji">??</div>
 
-    <h1>Chasse au trÈsor</h1>
+    <h1>Chasse au tr√©sor</h1>
 
     <p>
-        VÈrification de ton QR code...
+        V√©rification de ton QR code...
     </p>
 
 </div>
@@ -102,7 +108,7 @@ async function verifierCadeau() {
 
     const app = document.getElementById("app");
 
-    // RÈcupËre le code prÈsent dans l'adresse de la page
+    // R√©cup√®re le code pr√©sent dans l'adresse de la page
     const parametres = new URLSearchParams(window.location.search);
     const code = parametres.get("code");
 
@@ -114,7 +120,7 @@ async function verifierCadeau() {
             <h1>QR code invalide</h1>
 
             <p class="message">
-                Aucun code cadeau n'a ÈtÈ trouvÈ.
+                Aucun code cadeau n'a √©t√© trouv√©.
             </p>
         `;
 
@@ -147,7 +153,7 @@ async function verifierCadeau() {
         const resultat = await reponse.json();
 
         if (resultat.length === 0) {
-            throw new Error("RÈponse vide");
+            throw new Error("R√©ponse vide");
         }
 
         const cadeau = resultat[0];
@@ -161,7 +167,7 @@ async function verifierCadeau() {
                 <h1>BRAVO !</h1>
 
                 <p class="message">
-                    Tu as ÈtÈ le premier ‡ trouver ce QR code !
+                    Tu as √©t√© le premier √† trouver ce QR code !
                 </p>
 
                 <div class="cadeau">
@@ -169,12 +175,12 @@ async function verifierCadeau() {
                 </div>
 
                 <p class="message">
-                    PrÈsente cette page ‡ l'organisateur
-                    pour rÈcupÈrer ton cadeau.
+                    Pr√©sente cette page √† l'organisateur
+                    pour r√©cup√©rer ton cadeau.
                 </p>
 
                 <p class="petit">
-                    FÈlicitations et bonne continuation dans la chasse ! ??
+                    F√©licitations et bonne continuation dans la chasse ! ??
                 </p>
 
             `;
@@ -188,17 +194,17 @@ async function verifierCadeau() {
                 <h1>TROP TARD !</h1>
 
                 <p class="message">
-                    DÈsolÈ, ce cadeau a dÈj‡ ÈtÈ remportÈ.
+                    D√©sol√©, ce cadeau a d√©j√† √©t√© remport√©.
                 </p>
 
                 <div class="cadeau">
-                    ?? Cadeau dÈj‡ trouvÈ
+                    ?? Cadeau d√©j√† trouv√©
                 </div>
 
                 <p class="message">
                     Mais ne baisse pas les bras !
-                    Il reste encore des QR codes cachÈs
-                    dans la rÈsidence. ??
+                    Il reste encore des QR codes cach√©s
+                    dans la r√©sidence. ??
                 </p>
 
                 <p class="petit">
@@ -219,11 +225,11 @@ async function verifierCadeau() {
             <h1>Oups...</h1>
 
             <p class="message erreur">
-                Impossible de vÈrifier le QR code.
+                Impossible de v√©rifier le QR code.
             </p>
 
             <p class="petit">
-                Merci de rÈessayer dans quelques secondes.
+                Merci de r√©essayer dans quelques secondes.
             </p>
 
         `;
