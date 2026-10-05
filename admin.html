@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Administration - Chasse au trésor</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f4f5f7;
+            color: #222;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .box {
+            background: white;
+            border-radius: 18px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 6px 0 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        button {
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 15px;
+            margin: 3px;
+        }
+
+        .principal {
+            background: #667eea;
+            color: white;
+        }
+
+        .danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .secondary {
+            background: #e9ecef;
+            color: #222;
+        }
+
+        .success {
+            background: #198754;
+            color: white;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+        }
+
+        .erreur {
+            background: #f8d7da;
+            color: #842029;
+        }
+
+        .ok {
+            background: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
+
+        th,
+        td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background: #f8f9fa;
+        }
+
+        .disponible {
+            color: #198754;
+            font-weight: bold;
+        }
+
+        .gagne {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .petit {
+            color: #777;
+            font-size: 13px;
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .actions {
+            white-space: nowrap;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- CONNEXION -->
+
+    <div id="connexion" class="box">
+
+        <h1>?? Administration</h1>
+
+        <p>
+            Connecte-toi pour gérer les lots de la chasse au trésor.
+        </p>
+
+        <div id="messageConnexion"></div>
+
+        <label>Email</label>
+        <input
+            type="email"
+            id="email"
+            placeholder="Ton adresse e-mail"
+        >
+
+        <label>Mot de passe</label>
+        <input
+            type="password"
+            id="password"
+            placeholder="Ton mot de passe"
+        >
+
+        <button class="principal" onclick="connexionAdmin()">
+            Se connecter
+        </button>
+
+    </div>
+
+
+    <!-- ADMINISTRATION -->
+
+    <div id="administration" class="hidden">
+
+        <div class="box">
+
+            <div class="top">
+
+                <div>
+                    <h1>?? Gestion des lots</h1>
+
+                    <p class="petit">
+                        Ici tu peux voir et modifier les lots de la chasse.
+                    </p>
+                </div>
+
+                <button class="secondary" onclick="deconnexion()">
+                    Se déconnecter
+                </button>
+
+            </div>
+
+            <div id="messageAdmin"></div>
+
+        </div>
+
+
+        <!-- AJOUT D'UN LOT -->
+
+        <div class="box">
+
+            <h2>? Ajouter un lot</h2>
+
+            <label>Numéro du lot</label>
+
+            <input
+                type="number"
+                id="nouveauNumero"
+                min="1"
+                placeholder="Exemple : 31"
+            >
+
+            <label>Cadeau</label>
+
+            <input
+                type="text"
+                id="nouveauCadeau"
+                placeholder="Exemple : 1 pizza gratuite"
+            >
+
+            <button class="success" onclick="ajouterLot()">
+                Ajouter le lot
+            </button>
+
+        </div>
+
+
+        <!-- LISTE DES LOTS -->
+
+        <div class="box">
+
+            <h2>?? Tous les lots</h2>
+
+            <button class="secondary" onclick="chargerLots()">
+                ?? Actualiser
+            </button>
+
+            <br><br>
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>N°</th>
+                            <th>Code</th>
+                            <th>Cadeau</th>
+                            <th>État</th>
+                            <th>Actions</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="listeLots">
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script src="config.js"></script>
+
+<script>
+
+const clientSupabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+
+// --------------------------------------------------
+// MESSAGES
+// --------------------------------------------------
+
+function afficherMessage(elementId, texte, type = "") {
+
+    const element = document.getElementById(elementId);
+
+    element.innerHTML = `
+        <div class="message ${type}">
+            ${texte}
+        </div>
+    `;
+
+}
+
+
+// --------------------------------------------------
+// CONNEXION
+// --------------------------------------------------
+
+async function connexionAdmin() {
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    if (!email || !password) {
+
+        afficherMessage(
+            "messageConnexion",
+            "Merci de renseigner ton email et ton mot de passe.",
+            "erreur"
+        );
+
+        return;
+    }
+
+    const { data, error } =
+        await clientSupabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+    if (error) {
+
+        afficherMessage(
+            "messageConnexion",
+            "Connexion impossible : " + error.message,
+            "erreur"
+        );
+
+        return;
+    }
+
+    await verifierAdmin();
+
+}
+
+
+// --------------------------------------------------
+// VÉRIFIER QUE L'UTILISATEUR EST ADMIN
+// --------------------------------------------------
+
+async function verifierAdmin() {
+
+    const {
+        data: { user }
+    } = await clientSupabase.auth.getUser();
+
+    if (!user) {
+
+        afficherMessage(
+            "messageConnexion",
+            "Tu n'es pas connectée.",
+            "erreur"
+        );
+
+        return;
+    }
+
+    const { data, error } = await clientSupabase
+        .from("admins")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+    if (error || !data) {
+
+        await clientSupabase.auth.signOut();
+
+        afficherMessage(
+            "messageConnexion",
+            "Ce compte n'est pas autorisé à administrer les lots.",
+            "erreur"
+        );
+
+        return;
+    }
+
+    document.getElementById("connexion").classList.add("hidden");
+    document.getElementById("administration").classList.remove("hidden");
+
+    await chargerLots();
+
+}
+
+
+// --------------------------------------------------
+// CHARGER LES LOTS
+// --------------------------------------------------
+
+async function chargerLots() {
+
+    const { data, error } = await clientSupabase
+        .from("cadeaux")
+        .select("*")
+        .order("numero", { ascending: true });
+
+    if (error) {
+
+        afficherMessage(
+            "messageAdmin",
+            "Impossible de charger les lots : " + error.message,
+            "erreur"
+        );
+
+        return;
+    }
+
+    const liste = document.getElementById("listeLots");
+
+    liste.innerHTML = "";
+
+    data.forEach(lot => {
+
+        const ligne = document.createElement("tr");
+
+        const etat = lot.utilise
+            ? `<span class="gagne">?? Gagné</span>`
+            : `<span class="disponible">?? Disponible</span>`;
+
+        ligne.innerHTML = `
+
+            <td>
+                <strong>${lot.numero}</strong>
+            </td>
+
+            <td>
+                <code>${lot.code}</code>
+            </td>
+
+            <td>
+                <input
+                    id="cadeau-${lot.id}"
+                    value="${echapperHTML(lot.cadeau)}"
+                >
+            </td>
+
+            <td>
+                ${etat}
+            </td>
+
+            <td class="actions">
+
+                <button
+                    class="principal"
+                    onclick="modifierCadeau(${lot.id})"
+                >
+                    ?? Enregistrer
+                </button>
+
+                <button
+                    class="secondary"
+                    onclick="reinitialiserLot(${lot.id})"
+                >
+                    ?? Réinitialiser
+                </button>
+
+            </td>
+
+        `;
+
+        liste.appendChild(ligne);
+
+    });
+
+}
+
+
+// --------------------------------------------------
+// MODIFIER UN CADEAU
+// --------------------------------------------------
+
+async function modifierCadeau(id) {
+
+    const champ = document.getElementById("cadeau-" + id);
+
+    const nouveauCadeau = champ.value.trim();
+
+    if (!nouveauCadeau) {
+
+        alert("Le nom du cadeau ne peut pas être vide.");
+
+        return;
+    }
+
+    const { error } = await clientSupabase
+        .from("cadeaux")
+        .update({
+            cadeau: nouveauCadeau
+        })
+        .eq("id", id);
+
+    if (error) {
+
+        afficherMessage(
+            "messageAdmin",
+            "Erreur : " + error.message,
+            "erreur"
+        );
+
+        return;
+    }
+
+    afficherMessage(
+        "messageAdmin",
+        "? Le cadeau a bien été modifié.",
+        "ok"
+    );
+
+    await chargerLots();
+
+}
+
+
+// --------------------------------------------------
+// RÉINITIALISER UN LOT
+// --------------------------------------------------
+
+async function reinitialiserLot(id) {
+
+    const confirmation = confirm(
+        "Es-tu sûre de vouloir remettre ce lot disponible ?"
+    );
+
+    if (!confirmation) {
+        return;
+    }
+
+    const { error } = await clientSupabase
+        .from("cadeaux")
+        .update({
+            utilise: false,
+            gagne_le: null
+        })
+        .eq("id", id);
+
+    if (error) {
+
+        afficherMessage(
+            "messageAdmin",
+            "Erreur : " + error.message,
+            "erreur"
+        );
+
+        return;
+    }
+
+    afficherMessage(
+        "messageAdmin",
+        "? Le lot est de nouveau disponible.",
+        "ok"
+    );
+
+    await chargerLots();
+
+}
+
+
+// --------------------------------------------------
+// AJOUTER UN LOT
+// --------------------------------------------------
+
+function genererCode() {
+
+    const caracteres =
+        "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+    let code = "";
+
+    for (let i = 0; i < 6; i++) {
+
+        code += caracteres.charAt(
+            Math.floor(Math.random() * caracteres.length)
+        );
+
+    }
+
+    return code;
+
+}
+
+
+async function ajouterLot() {
+
+    const numero =
+        parseInt(
+            document.getElementById("nouveauNumero").value,
+            10
+        );
+
+    const cadeau =
+        document.getElementById("nouveauCadeau").value.trim();
+
+    if (!numero || numero < 1) {
+
+        alert("Merci d'indiquer un numéro de lot valide.");
+
+        return;
+    }
+
+    if (!cadeau) {
+
+        alert("Merci d'indiquer le cadeau.");
+
+        return;
+    }
+
+    const code = genererCode();
+
+    const { error } = await clientSupabase
+        .from("cadeaux")
+        .insert({
+            numero: numero,
+            code: code,
+            cadeau: cadeau
+        });
+
+    if (error) {
+
+        afficherMessage(
+            "messageAdmin",
+            "Impossible d'ajouter le lot : " + error.message,
+            "erreur"
+        );
+
+        return;
+    }
+
+    document.getElementById("nouveauNumero").value = "";
+    document.getElementById("nouveauCadeau").value = "";
+
+    afficherMessage(
+        "messageAdmin",
+        `? Lot n°${numero} ajouté avec le code ${code}.`,
+        "ok"
+    );
+
+    await chargerLots();
+
+}
+
+
+// --------------------------------------------------
+// DÉCONNEXION
+// --------------------------------------------------
+
+async function deconnexion() {
+
+    await clientSupabase.auth.signOut();
+
+    document.getElementById("administration").classList.add("hidden");
+    document.getElementById("connexion").classList.remove("hidden");
+
+}
+
+
+// --------------------------------------------------
+// VÉRIFICATION AUTOMATIQUE AU CHARGEMENT
+// --------------------------------------------------
+
+async function verifierConnexionExistante() {
+
+    const {
+        data: { session }
+    } = await clientSupabase.auth.getSession();
+
+    if (session) {
+        await verifierAdmin();
+    }
+
+}
+
+
+// --------------------------------------------------
+// PROTECTION CONTRE LE HTML DANS LES CHAMPS
+// --------------------------------------------------
+
+function echapperHTML(texte) {
+
+    return texte
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+// Lancement
+
+verifierConnexionExistante();
+
+</script>
+
+</body>
+</html>
