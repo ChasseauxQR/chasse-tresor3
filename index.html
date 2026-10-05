@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Chasse au trésor</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-radius: 25px;
+            padding: 40px 25px;
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+        }
+
+        .emoji {
+            font-size: 70px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #222;
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+
+        p {
+            color: #666;
+            font-size: 18px;
+            line-height: 1.5;
+        }
+
+        .cadeau {
+            margin: 30px 0;
+            padding: 25px;
+            background: #fff3cd;
+            border-radius: 18px;
+            font-size: 25px;
+            font-weight: bold;
+            color: #856404;
+        }
+
+        .message {
+            font-size: 18px;
+            line-height: 1.6;
+        }
+
+        .petit {
+            font-size: 14px;
+            color: #999;
+            margin-top: 30px;
+        }
+
+        .erreur {
+            color: #b00020;
+        }
+
+        .cache {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container" id="app">
+
+    <div class="emoji">??</div>
+
+    <h1>Chasse au trésor</h1>
+
+    <p>
+        Vérification de ton QR code...
+    </p>
+
+</div>
+
+<script src="config.js"></script>
+
+<script>
+
+async function verifierCadeau() {
+
+    const app = document.getElementById("app");
+
+    // Récupère le code présent dans l'adresse de la page
+    const parametres = new URLSearchParams(window.location.search);
+    const code = parametres.get("code");
+
+    if (!code) {
+
+        app.innerHTML = `
+            <div class="emoji">?</div>
+
+            <h1>QR code invalide</h1>
+
+            <p class="message">
+                Aucun code cadeau n'a été trouvé.
+            </p>
+        `;
+
+        return;
+    }
+
+    try {
+
+        const reponse = await fetch(
+            SUPABASE_URL + "/rest/v1/rpc/tenter_cadeau",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json",
+                    "apikey": SUPABASE_KEY,
+                    "Authorization": "Bearer " + SUPABASE_KEY
+                },
+
+                body: JSON.stringify({
+                    code_recu: code
+                })
+            }
+        );
+
+        if (!reponse.ok) {
+            throw new Error("Erreur serveur");
+        }
+
+        const resultat = await reponse.json();
+
+        if (resultat.length === 0) {
+            throw new Error("Réponse vide");
+        }
+
+        const cadeau = resultat[0];
+
+        if (cadeau.gagne === true) {
+
+            app.innerHTML = `
+
+                <div class="emoji">??</div>
+
+                <h1>BRAVO !</h1>
+
+                <p class="message">
+                    Tu as été le premier à trouver ce QR code !
+                </p>
+
+                <div class="cadeau">
+                    ?? ${cadeau.cadeau_gagne}
+                </div>
+
+                <p class="message">
+                    Présente cette page à l'organisateur
+                    pour récupérer ton cadeau.
+                </p>
+
+                <p class="petit">
+                    Félicitations et bonne continuation dans la chasse ! ??
+                </p>
+
+            `;
+
+        } else {
+
+            app.innerHTML = `
+
+                <div class="emoji">??</div>
+
+                <h1>TROP TARD !</h1>
+
+                <p class="message">
+                    Désolé, ce cadeau a déjà été remporté.
+                </p>
+
+                <div class="cadeau">
+                    ?? Cadeau déjà trouvé
+                </div>
+
+                <p class="message">
+                    Mais ne baisse pas les bras !
+                    Il reste encore des QR codes cachés
+                    dans la résidence. ??
+                </p>
+
+                <p class="petit">
+                    Bonne chasse !
+                </p>
+
+            `;
+        }
+
+    } catch (erreur) {
+
+        console.error(erreur);
+
+        app.innerHTML = `
+
+            <div class="emoji">??</div>
+
+            <h1>Oups...</h1>
+
+            <p class="message erreur">
+                Impossible de vérifier le QR code.
+            </p>
+
+            <p class="petit">
+                Merci de réessayer dans quelques secondes.
+            </p>
+
+        `;
+    }
+}
+
+verifierCadeau();
+
+</script>
+
+</body>
+</html>
